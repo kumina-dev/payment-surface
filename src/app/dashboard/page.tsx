@@ -1,5 +1,9 @@
+import { CreateCheckoutSessionForm } from "@/app/dashboard/create-checkout-session-form";
 import { getDemoAuthContext } from "@/modules/auth/auth.service";
-import { formatMoney, listCheckoutSessions } from "@/modules/checkout-sessions/checkout-sessions.service";
+import {
+  formatMoney,
+  listCheckoutSessions
+} from "@/modules/checkout-sessions/checkout-sessions.service";
 import { getDemoMerchant } from "@/modules/merchants/merchants.service";
 import Link from "next/link";
 
@@ -49,10 +53,13 @@ export default async function DashboardPage() {
         </article>
       </section>
 
+      <CreateCheckoutSessionForm />
+
       <section className="mt-8 rounded-2xl border border-white/10 bg-white/3">
         <div className="border-b border-white/10 p-5">
           <h2 className="text-lg font-medium text-zinc-50">Checkout sessions</h2>
         </div>
+
         <div className="grid grid-cols-5 gap-4 p-5 text-sm text-zinc-400">
           <span>ID</span>
           <span>Title</span>
@@ -75,6 +82,12 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ))}
+
+        {checkoutSessions.length === 0 ? (
+          <div className="border-t border-white/10 p-5 text-sm text-zinc-500">
+            No checkout sessions yet.
+          </div>
+        ) : null}
       </section>
     </main>
   );
