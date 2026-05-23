@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Merchant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  checkoutSessions CheckoutSession[]
+  paymentIntents   PaymentIntent[]
+  ledgerEntries    LedgerEntry[]
+  webhookEndpoints WebhookEndpoint[]
+}
+
+model CheckoutSession {
+  id          String                @id @default(cuid())
+  merchantId  String
+  title       String
+  description String?
+  amountCents Int
+  currency    String
+  status      CheckoutSessionStatus @default(PENDING)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  expiresAt   DateTime?
+
+  merchant      Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  paymentIntent PaymentIntent?
+
+  @@index([merchantId])
+  @@index([status])
+}
+
+model PaymentIntent {
+  id                String              @id @default(cuid())
+  merchantId        String
+  checkoutSessionId String?             @unique
+  amountCents       Int
+  currency          String
+  status            PaymentIntentStatus @default(REQUIRES_PAYMENT_METHOD)
+  idempotencyKey    String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id], onDelete: SetNull)
+  authorizations  Authorization[]
+  captures        Capture[]
+  refunds         Refund[]
+  ledgerEntries   LedgerEntry[]
+
+  @@unique([merchantId, idempotencyKey])
+  @@index([merchantId])
+  @@index([status])
+}
+
+model Authorization {
+  id              String              @id @default(cuid())
+  paymentIntentId String
+  status          AuthorizationStatus
+  amountCents     Int
+  currency        String
+  failureCode     String?
+  createdAt       DateTime            @default(now())
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentIntentId])
+}
+
+model Capture {
+  id              String        @id @default(cuid())
+  paymentIntentId String
+  status          CaptureStatus
+  amountCents     Int
+  currency        String
+  createdAt       DateTime      @default(now())
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentIntentId])
+}
+
+model Refund {
+  id              String       @id @default(cuid())
+  paymentIntentId String
+  status          RefundStatus
+  amountCents     Int
+  currency        String
+  reason          String?
+  createdAt       DateTime     @default(now())
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentIntentId])
+}
+
+model LedgerEntry {
+  id              String          @id @default(cuid())
+  merchantId      String
+  paymentIntentId String?
+  type            LedgerEntryType
+  direction       LedgerDirection
+  amountCents     Int
+  currency        String
+  createdAt       DateTime        @default(now())
+
+  merchant      Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  paymentIntent PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId])
+  @@index([paymentIntentId])
+}
+
+model WebhookEndpoint {
+  id         String   @id @default(cuid())
+  merchantId String
+  url        String
+  secret     String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  merchant Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  events   WebhookEvent[]
+
+  @@index([merchantId])
+}
+
+model WebhookEvent {
+  id                String             @id @default(cuid())
+  webhookEndpointId String?
+  type              String
+  payload           Json
+  status            WebhookEventStatus @default(PENDING)
+  attempts          Int                @default(0)
+  createdAt         DateTime           @default(now())
+  deliveredAt       DateTime?
+
+  webhookEndpoint WebhookEndpoint? @relation(fields: [webhookEndpointId], references: [id], onDelete: SetNull)
+
+  @@index([webhookEndpointId])
+  @@index([type])
+  @@index([status])
+}
+
+enum CheckoutSessionStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum PaymentIntentStatus {
+  REQUIRES_PAYMENT_METHOD
+  REQUIRES_CONFIRMATION
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+}
+
+enum AuthorizationStatus {
+  APPROVED
+  DECLINED
+}
+
+enum CaptureStatus {
+  SUCCEEDED
+  FAILED
+}
+
+enum RefundStatus {
+  SUCCEEDED
+  FAILED
+}
+
+enum LedgerEntryType {
+  PAYMENT
+  REFUND
+  FEE
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+enum WebhookEventStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
