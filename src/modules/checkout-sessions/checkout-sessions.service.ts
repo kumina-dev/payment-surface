@@ -21,6 +21,31 @@ export function formatMoney(amountCents: number, currency: string): string {
   }).format(amountCents / 100);
 }
 
+export async function listCheckoutSessions(input: {
+  merchantId: string;
+}): Promise<CheckoutSessionSummary[]> {
+  const checkoutSessions = await prisma.checkoutSession.findMany({
+    where: {
+      merchantId: input.merchantId
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+
+  return checkoutSessions.map(mapCheckoutSession);
+}
+
+export async function findCheckoutSessionById(id: string): Promise<CheckoutSessionSummary | null> {
+  const checkoutSession = await prisma.checkoutSession.findUnique({
+    where: {
+      id
+    }
+  });
+
+  return checkoutSession ? mapCheckoutSession(checkoutSession) : null;
+}
+
 export async function createCheckoutSession(input: {
   merchantId: string;
   title: string;
@@ -38,15 +63,7 @@ export async function createCheckoutSession(input: {
     }
   });
 
-  return {
-    id: checkoutSession.id,
-    merchantId: checkoutSession.merchantId,
-    title: checkoutSession.title,
-    description: checkoutSession.description ?? undefined,
-    amountCents: checkoutSession.amountCents,
-    currency: checkoutSession.currency,
-    status: mapCheckoutSessionStatus(checkoutSession.status)
-  };
+  return mapCheckoutSession(checkoutSession);
 }
 
 export async function markCheckoutSessionPaid(id: string): Promise<void> {
@@ -58,6 +75,26 @@ export async function markCheckoutSessionPaid(id: string): Promise<void> {
       status: CheckoutSessionStatus.PAID
     }
   });
+}
+
+function mapCheckoutSession(checkoutSession: {
+  id: string;
+  merchantId: string;
+  title: string;
+  description: string | null;
+  amountCents: number;
+  currency: string;
+  status: CheckoutSessionStatus;
+}): CheckoutSessionSummary {
+  return {
+    id: checkoutSession.id,
+    merchantId: checkoutSession.merchantId,
+    title: checkoutSession.title,
+    description: checkoutSession.description ?? undefined,
+    amountCents: checkoutSession.amountCents,
+    currency: checkoutSession.currency,
+    status: mapCheckoutSessionStatus(checkoutSession.status)
+  };
 }
 
 function mapCheckoutSessionStatus(status: CheckoutSessionStatus): CheckoutSessionSummary["status"] {

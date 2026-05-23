@@ -1,5 +1,7 @@
-import { formatMoney, getDemoCheckoutSession } from "@/modules/checkout-sessions/checkout-sessions.service";
+import { findCheckoutSessionById, formatMoney } from "@/modules/checkout-sessions/checkout-sessions.service";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 type CheckoutPageProps = {
   params: Promise<{
@@ -9,9 +11,9 @@ type CheckoutPageProps = {
 
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const { checkoutSessionId } = await params;
-  const checkoutSession = getDemoCheckoutSession();
+  const checkoutSession = await findCheckoutSessionById(checkoutSessionId);
 
-  if (checkoutSessionId !== checkoutSession.id) {
+  if (!checkoutSession) {
     notFound();
   }
 
