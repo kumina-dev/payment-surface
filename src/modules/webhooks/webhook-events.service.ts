@@ -11,3 +11,15 @@ export function createPaymentSucceededEvent(input: {
     payload: input
   };
 }
+
+export function createPaymentFailedEvent(input: {
+  paymentIntentId: string;
+  merchantId: string;
+  amountCents: number;
+  currency: string;
+}): WebhookEventDraft {
+  return {
+    type: "payment_intent.failed",
+    payload: input
+  };
+}
