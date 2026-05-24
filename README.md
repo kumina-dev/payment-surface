@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Payment Surface
 
-## Getting Started
+Minimal simulated payment platform built with Next.js, TypeScript, Prisma, PostgreSQL, and Tailwind.
 
-First, run the development server:
+## Scope
+
+Payment Surface is a portfolio project. It simulates payment-platform primitives without processing real money.
+
+## Features
+
+- Merchant demo context
+- Checkout session creation
+- Hosted checkout page
+- Test card authorization
+- Payment intent lifecycle
+- Authorization and capture records
+- Immutable ledger entries
+- Webhook event records
+- Webhook endpoint registration
+- Dashboard overview
+- Prisma 7 config with `prisma.config.ts`
+
+## Test cards
+
+| Card number | Result |
+| --- | --- |
+| `4242 4242 4242 4242` | Success |
+| `4000 0000 0000 0002` | Declined |
+| `4000 0000 0000 9995` | Insufficient funds |
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env
+docker compose up -d
+pnpm prisma:migrate
+pnpm db:seed
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Verify
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm check
+pnpm build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Useful endpoints
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```txt
+GET    /api/health
+GET    /api/checkout-sessions
+POST   /api/checkout-sessions
+GET    /api/payment-intents
+POST   /api/payment-intents
+PATCH  /api/payment-intents
+GET    /api/payment-intents/:paymentIntentId
+GET    /api/ledger
+GET    /api/webhook-endpoints
+POST   /api/webhook-endpoints
+GET    /api/webhook-events
+PATCH  /api/webhook-events/:webhookEventId
+GET    /api/webhooks/test
+```

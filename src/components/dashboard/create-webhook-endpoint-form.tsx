@@ -45,7 +45,7 @@ export function CreateWebhookEndpointForm() {
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03]">
+    <section className="mt-8 rounded-2xl border border-white/10 bg-white/3">
       <div className="border-b border-white/10 p-5">
         <h2 className="text-lg font-medium text-zinc-50">Create webhook endpoint</h2>
       </div>
