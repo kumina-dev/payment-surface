@@ -1,4 +1,4 @@
-import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { StripeCheckoutButton } from "@/components/checkout/stripe-checkout-button";
 import {
   findCheckoutSessionById,
   formatMoney
@@ -42,16 +42,11 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             This checkout session is already paid.
           </div>
         ) : (
-          <CheckoutForm
-            checkoutSessionId={session.id}
-            merchantId={session.merchantId}
-            amountCents={session.amountCents}
-            currency={session.currency}
-          />
+          <StripeCheckoutButton checkoutSessionId={session.id} />
         )}
 
         <p className="mt-5 text-sm text-zinc-500">
-          Test mode only. Real money is not invited to this disaster.
+          Payments are processed by Stripe Checkout.
         </p>
       </section>
     </main>

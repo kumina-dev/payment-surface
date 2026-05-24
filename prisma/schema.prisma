@@ -20,34 +20,38 @@ model Merchant {
 }
 
 model CheckoutSession {
-  id          String                @id @default(cuid())
-  merchantId  String
-  title       String
-  description String?
-  amountCents Int
-  currency    String
-  status      CheckoutSessionStatus @default(PENDING)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  expiresAt   DateTime?
+  id                      String                @id @default(cuid())
+  merchantId              String
+  title                   String
+  description             String?
+  amountCents             Int
+  currency                String
+  status                  CheckoutSessionStatus @default(PENDING)
+  stripeCheckoutSessionId String?               @unique
+  stripeCheckoutUrl       String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  expiresAt               DateTime?
 
   merchant      Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   paymentIntent PaymentIntent?
 
   @@index([merchantId])
   @@index([status])
+  @@index([stripeCheckoutSessionId])
 }
 
 model PaymentIntent {
-  id                String              @id @default(cuid())
-  merchantId        String
-  checkoutSessionId String?             @unique
-  amountCents       Int
-  currency          String
-  status            PaymentIntentStatus @default(REQUIRES_PAYMENT_METHOD)
-  idempotencyKey    String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                    String              @id @default(cuid())
+  merchantId            String
+  checkoutSessionId     String?             @unique
+  amountCents           Int
+  currency              String
+  status                PaymentIntentStatus @default(REQUIRES_PAYMENT_METHOD)
+  idempotencyKey        String?
+  stripePaymentIntentId String?             @unique
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
   merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id], onDelete: SetNull)
@@ -59,6 +63,7 @@ model PaymentIntent {
   @@unique([merchantId, idempotencyKey])
   @@index([merchantId])
   @@index([status])
+  @@index([stripePaymentIntentId])
 }
 
 model Authorization {

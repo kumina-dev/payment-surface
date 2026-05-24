@@ -1,18 +1,6 @@
 import { CheckoutSessionStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import type { CheckoutSessionSummary } from "@/modules/checkout-sessions/checkout-session.types";
-
-export function getDemoCheckoutSession(): CheckoutSessionSummary {
-  return {
-    id: "checkout_demo",
-    merchantId: "merchant_demo",
-    title: "Demo Merchant",
-    description: "A fake payment flow. Because real card networks are not a weekend toy.",
-    amountCents: 1999,
-    currency: "EUR",
-    status: "pending"
-  };
-}
+import type { CheckoutSessionSummary } from "./checkout-session.types";
 
 export function formatMoney(amountCents: number, currency: string): string {
   return new Intl.NumberFormat("en", {
@@ -46,6 +34,18 @@ export async function findCheckoutSessionById(id: string): Promise<CheckoutSessi
   return checkoutSession ? mapCheckoutSession(checkoutSession) : null;
 }
 
+export async function findCheckoutSessionByStripeId(
+  stripeCheckoutSessionId: string
+): Promise<CheckoutSessionSummary | null> {
+  const checkoutSession = await prisma.checkoutSession.findUnique({
+    where: {
+      stripeCheckoutSessionId
+    }
+  });
+
+  return checkoutSession ? mapCheckoutSession(checkoutSession) : null;
+}
+
 export async function createCheckoutSession(input: {
   merchantId: string;
   title: string;
@@ -66,6 +66,24 @@ export async function createCheckoutSession(input: {
   return mapCheckoutSession(checkoutSession);
 }
 
+export async function attachStripeCheckoutSession(input: {
+  checkoutSessionId: string;
+  stripeCheckoutSessionId: string;
+  stripeCheckoutUrl: string;
+}): Promise<CheckoutSessionSummary> {
+  const checkoutSession = await prisma.checkoutSession.update({
+    where: {
+      id: input.checkoutSessionId
+    },
+    data: {
+      stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+      stripeCheckoutUrl: input.stripeCheckoutUrl
+    }
+  });
+
+  return mapCheckoutSession(checkoutSession);
+}
+
 export async function markCheckoutSessionPaid(id: string): Promise<void> {
   await prisma.checkoutSession.update({
     where: {
@@ -73,6 +91,17 @@ export async function markCheckoutSessionPaid(id: string): Promise<void> {
     },
     data: {
       status: CheckoutSessionStatus.PAID
+    }
+  });
+}
+
+export async function markCheckoutSessionFailed(id: string): Promise<void> {
+  await prisma.checkoutSession.update({
+    where: {
+      id
+    },
+    data: {
+      status: CheckoutSessionStatus.FAILED
     }
   });
 }
@@ -85,6 +114,8 @@ function mapCheckoutSession(checkoutSession: {
   amountCents: number;
   currency: string;
   status: CheckoutSessionStatus;
+  stripeCheckoutSessionId: string | null;
+  stripeCheckoutUrl: string | null;
 }): CheckoutSessionSummary {
   return {
     id: checkoutSession.id,
@@ -93,7 +124,9 @@ function mapCheckoutSession(checkoutSession: {
     description: checkoutSession.description ?? undefined,
     amountCents: checkoutSession.amountCents,
     currency: checkoutSession.currency,
-    status: mapCheckoutSessionStatus(checkoutSession.status)
+    status: mapCheckoutSessionStatus(checkoutSession.status),
+    stripeCheckoutSessionId: checkoutSession.stripeCheckoutSessionId ?? undefined,
+    stripeCheckoutUrl: checkoutSession.stripeCheckoutUrl ?? undefined
   };
 }
 

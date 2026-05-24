@@ -8,4 +8,6 @@ export type CheckoutSessionSummary = {
   amountCents: number;
   currency: string;
   status: CheckoutSessionStatus;
+  stripeCheckoutSessionId?: string;
+  stripeCheckoutUrl?: string;
 };

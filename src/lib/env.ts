@@ -1,4 +1,6 @@
 export const env = {
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
-  databaseUrl: process.env.DATABASE_URL
+  databaseUrl: process.env.DATABASE_URL,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET
 };
