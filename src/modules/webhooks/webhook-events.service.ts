@@ -1,3 +1,5 @@
+// WILL EXPAND: add signed HTTP webhook delivery and retry backoff.
+
 import { WebhookEventStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import type { WebhookEventDraft, WebhookEventSummary } from "./webhook.types";

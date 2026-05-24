@@ -1,3 +1,5 @@
+// WILL EXPAND: replace demo merchant context with Better Auth or custom auth.
+
 export type AuthContext = {
   merchantId: string;
 };

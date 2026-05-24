@@ -1,3 +1,5 @@
+// WILL EXPAND: database access will be used by services after migrations generate the Prisma client.
+
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
