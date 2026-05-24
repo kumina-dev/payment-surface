@@ -1,3 +1,4 @@
+import { CreateWebhookEndpointForm } from "@/components/dashboard/create-webhook-endpoint-form";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { getDemoAuthContext } from "@/modules/auth/auth.service";
@@ -77,6 +78,7 @@ export default async function DashboardPage() {
       </section>
 
       <CreateCheckoutSessionForm />
+      <CreateWebhookEndpointForm />
 
       <DashboardSection title="Checkout sessions">
         <div className="grid grid-cols-5 gap-4 p-5 text-sm text-zinc-400">
