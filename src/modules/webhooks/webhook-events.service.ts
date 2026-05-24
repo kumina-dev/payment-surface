@@ -1,7 +1,6 @@
-// WILL EXPAND: add signed HTTP webhook delivery and retry backoff.
-
 import { WebhookEventStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
+import crypto from "node:crypto";
 import type { WebhookEventDraft, WebhookEventSummary } from "./webhook.types";
 
 export function createPaymentSucceededEvent(input: {
@@ -71,6 +70,35 @@ export async function markWebhookEventFailed(id: string): Promise<WebhookEventSu
   });
 
   return mapWebhookEvent(event);
+}
+
+export function createWebhookSignature(input: {
+  payload: string;
+  secret: string;
+  timestamp: number;
+}): string {
+  const signedPayload = `${input.timestamp}.${input.payload}`;
+
+  return crypto.createHmac("sha256", input.secret).update(signedPayload).digest("hex");
+}
+
+export function createWebhookDeliveryHeaders(input: {
+  payload: string;
+  secret: string;
+  timestamp?: number;
+}): Headers {
+  const timestamp = input.timestamp ?? Math.floor(Date.now() / 1000);
+  const signature = createWebhookSignature({
+    payload: input.payload,
+    secret: input.secret,
+    timestamp
+  });
+
+  return new Headers({
+    "content-type": "application/json",
+    "payment-surface-timestamp": timestamp.toString(),
+    "payment-surface-signature": signature
+  });
 }
 
 function mapWebhookEvent(event: {
