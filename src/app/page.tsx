@@ -8,8 +8,8 @@ export default function HomePage() {
         A tiny simulated payment platform.
       </h1>
       <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
-        Checkout sessions, fake card authorization, payment intent lifecycle, ledger thinking, and
-        webhook events. No real money. No fake empire.
+        Checkout sessions, fake card authorization, payment intent lifecycle, ledger entries, and
+        webhook events. No real money. No fake empire. Tragic restraint, but useful.
       </p>
       <div className="mt-10 flex gap-4">
         <Link
