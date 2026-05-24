@@ -35,7 +35,52 @@ export async function listWebhookEvents(): Promise<WebhookEventSummary[]> {
     take: 50
   });
 
-  return events.map((event) => ({
+  return events.map(mapWebhookEvent);
+}
+
+export async function markWebhookEventDelivered(id: string): Promise<WebhookEventSummary> {
+  const event = await prisma.webhookEvent.update({
+    where: {
+      id
+    },
+    data: {
+      status: WebhookEventStatus.DELIVERED,
+      attempts: {
+        increment: 1
+      },
+      deliveredAt: new Date()
+    }
+  });
+
+  return mapWebhookEvent(event);
+}
+
+export async function markWebhookEventFailed(id: string): Promise<WebhookEventSummary> {
+  const event = await prisma.webhookEvent.update({
+    where: {
+      id
+    },
+    data: {
+      status: WebhookEventStatus.FAILED,
+      attempts: {
+        increment: 1
+      }
+    }
+  });
+
+  return mapWebhookEvent(event);
+}
+
+function mapWebhookEvent(event: {
+  id: string;
+  type: string;
+  payload: WebhookEventSummary["payload"];
+  status: WebhookEventStatus;
+  attempts: number;
+  createdAt: Date;
+  deliveredAt: Date | null;
+}): WebhookEventSummary {
+  return {
     id: event.id,
     type: event.type,
     payload: event.payload,
@@ -43,7 +88,7 @@ export async function listWebhookEvents(): Promise<WebhookEventSummary[]> {
     attempts: event.attempts,
     createdAt: event.createdAt.toISOString(),
     deliveredAt: event.deliveredAt?.toISOString()
-  }));
+  };
 }
 
 function mapWebhookEventStatus(status: WebhookEventStatus): WebhookEventSummary["status"] {

@@ -16,3 +16,11 @@ export type WebhookEventSummary = {
   createdAt: string;
   deliveredAt?: string;
 };
+
+export type WebhookEndpointSummary = {
+  id: string;
+  merchantId: string;
+  url: string;
+  enabled: boolean;
+  createdAt: string;
+};

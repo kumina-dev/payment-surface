@@ -8,6 +8,7 @@ import {
 import { listLedgerEntries } from "@/modules/ledger/ledger.service";
 import { getDemoMerchant } from "@/modules/merchants/merchants.service";
 import { listPaymentIntents } from "@/modules/payment-intents/payment-intents.service";
+import { listWebhookEndpoints } from "@/modules/webhooks/webhook-endpoints.service";
 import { listWebhookEvents } from "@/modules/webhooks/webhook-events.service";
 import Link from "next/link";
 import { CreateCheckoutSessionForm } from "./create-checkout-session-form";
@@ -18,18 +19,22 @@ export default async function DashboardPage() {
   const auth = getDemoAuthContext();
   const merchant = getDemoMerchant();
 
-  const [checkoutSessions, paymentIntents, ledgerEntries, webhookEvents] = await Promise.all([
-    listCheckoutSessions({
-      merchantId: auth.merchantId
-    }),
-    listPaymentIntents({
-      merchantId: auth.merchantId
-    }),
-    listLedgerEntries({
-      merchantId: auth.merchantId
-    }),
-    listWebhookEvents()
-  ]);
+  const [checkoutSessions, paymentIntents, ledgerEntries, webhookEvents, webhookEndpoints] =
+    await Promise.all([
+      listCheckoutSessions({
+        merchantId: auth.merchantId
+      }),
+      listPaymentIntents({
+        merchantId: auth.merchantId
+      }),
+      listLedgerEntries({
+        merchantId: auth.merchantId
+      }),
+      listWebhookEvents(),
+      listWebhookEndpoints({
+        merchantId: auth.merchantId
+      })
+    ]);
 
   const totalVolumeCents = checkoutSessions.reduce((total, session) => {
     return session.status === "paid" ? total + session.amountCents : total;
@@ -152,6 +157,29 @@ export default async function DashboardPage() {
         ))}
 
         {ledgerEntries.length === 0 ? <EmptyState>No ledger entries yet.</EmptyState> : null}
+      </DashboardSection>
+
+      <DashboardSection title="Webhook endpoints">
+        <div className="grid grid-cols-4 gap-4 p-5 text-sm text-zinc-400">
+          <span>ID</span>
+          <span>URL</span>
+          <span>Enabled</span>
+          <span>Created</span>
+        </div>
+
+        {webhookEndpoints.map((endpoint) => (
+          <div
+            key={endpoint.id}
+            className="grid grid-cols-4 gap-4 border-t border-white/10 p-5 text-sm text-zinc-100"
+          >
+            <span className="truncate">{endpoint.id}</span>
+            <span className="truncate">{endpoint.url}</span>
+            <span>{endpoint.enabled ? "yes" : "no"}</span>
+            <span>{new Date(endpoint.createdAt).toLocaleString("en")}</span>
+          </div>
+        ))}
+
+        {webhookEndpoints.length === 0 ? <EmptyState>No webhook endpoints yet.</EmptyState> : null}
       </DashboardSection>
 
       <DashboardSection title="Webhook events">
