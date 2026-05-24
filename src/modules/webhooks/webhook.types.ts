@@ -6,3 +6,13 @@ export type WebhookEventDraft = {
   type: WebhookEventType;
   payload: Prisma.InputJsonValue;
 };
+
+export type WebhookEventSummary = {
+  id: string;
+  type: string;
+  payload: Prisma.JsonValue;
+  status: "pending" | "delivered" | "failed";
+  attempts: number;
+  createdAt: string;
+  deliveredAt?: string;
+};

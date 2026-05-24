@@ -1,8 +1,22 @@
+import { getDemoAuthContext } from "@/modules/auth/auth.service";
 import {
   confirmPersistedPaymentIntent,
-  createPaymentIntent
+  createPaymentIntent,
+  listPaymentIntents
 } from "@/modules/payment-intents/payment-intents.service";
 import { NextResponse } from "next/server";
+
+export async function GET() {
+  const auth = getDemoAuthContext();
+
+  const paymentIntents = await listPaymentIntents({
+    merchantId: auth.merchantId
+  });
+
+  return NextResponse.json({
+    data: paymentIntents
+  });
+}
 
 export async function POST(request: Request) {
   const idempotencyKey = request.headers.get("idempotency-key") ?? undefined;

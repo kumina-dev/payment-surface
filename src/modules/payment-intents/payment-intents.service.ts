@@ -7,9 +7,9 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { markCheckoutSessionPaid } from "@/modules/checkout-sessions/checkout-sessions.service";
-import type { PaymentIntentSummary } from "@/modules/payment-intents/payment-intent.types";
 import { authorizeTestCard } from "@/modules/payment-methods/test-card-network";
 import { createPaymentSucceededEvent } from "@/modules/webhooks/webhook-events.service";
+import type { PaymentIntentSummary } from "./payment-intent.types";
 
 type CreatePaymentIntentInput = {
   merchantId: string;
@@ -41,6 +41,32 @@ export function confirmTestPaymentIntent(input: ConfirmPaymentIntentInput): Paym
     currency: input.currency,
     status: authorization.approved ? "succeeded" : "failed"
   };
+}
+
+export async function listPaymentIntents(input: {
+  merchantId: string;
+}): Promise<PaymentIntentSummary[]> {
+  const paymentIntents = await prisma.paymentIntent.findMany({
+    where: {
+      merchantId: input.merchantId
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: 50
+  });
+
+  return paymentIntents.map(mapPaymentIntent);
+}
+
+export async function findPaymentIntentById(id: string): Promise<PaymentIntentSummary | null> {
+  const paymentIntent = await prisma.paymentIntent.findUnique({
+    where: {
+      id
+    }
+  });
+
+  return paymentIntent ? mapPaymentIntent(paymentIntent) : null;
 }
 
 export async function createPaymentIntent(

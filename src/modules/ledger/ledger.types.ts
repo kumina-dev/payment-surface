@@ -7,3 +7,14 @@ export type LedgerEntryDraft = {
   amountCents: number;
   currency: string;
 };
+
+export type LedgerEntrySummary = {
+  id: string;
+  merchantId: string;
+  paymentIntentId?: string;
+  type: "payment" | "refund" | "fee";
+  direction: LedgerDirection;
+  amountCents: number;
+  currency: string;
+  createdAt: string;
+};
