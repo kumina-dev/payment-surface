@@ -1,3 +1,4 @@
+import { CreateCheckoutSessionForm } from "@/components/dashboard/create-checkout-session-form";
 import { CreateWebhookEndpointForm } from "@/components/dashboard/create-webhook-endpoint-form";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -12,7 +13,6 @@ import { listPaymentIntents } from "@/modules/payment-intents/payment-intents.se
 import { listWebhookEndpoints } from "@/modules/webhooks/webhook-endpoints.service";
 import { listWebhookEvents } from "@/modules/webhooks/webhook-events.service";
 import Link from "next/link";
-import { CreateCheckoutSessionForm } from "./create-checkout-session-form";
 
 export const dynamic = "force-dynamic";
 

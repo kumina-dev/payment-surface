@@ -84,7 +84,7 @@ export function CheckoutForm({
 
   return (
     <div className="mt-8 space-y-4">
-      <label className="label">
+      <label className="block">
         <span className="text-sm text-zinc-400">Test card</span>
         <input
           name="cardNumber"

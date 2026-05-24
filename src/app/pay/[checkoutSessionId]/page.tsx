@@ -1,4 +1,4 @@
-import { CheckoutForm } from "@/app/pay/[checkoutSessionId]/checkout-form";
+import { CheckoutForm } from "@/components/checkout/checkout-form";
 import {
   findCheckoutSessionById,
   formatMoney
@@ -25,7 +25,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-6 py-12">
-      <section className="rounded-3xl border border-white/10 bg-white/4 p-8 shadow-2xl">
+      <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl">
         <p className="text-sm uppercase tracking-[0.28em] text-zinc-500">Checkout</p>
         <h1 className="mt-4 text-3xl font-semibold text-zinc-50">{session.title}</h1>
         {session.description ? <p className="mt-3 text-zinc-400">{session.description}</p> : null}
