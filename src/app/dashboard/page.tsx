@@ -1,3 +1,5 @@
+import { DashboardSection } from "@/components/dashboard/dashboard-section";
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { getDemoAuthContext } from "@/modules/auth/auth.service";
 import {
   formatMoney,
@@ -8,8 +10,6 @@ import { getDemoMerchant } from "@/modules/merchants/merchants.service";
 import { listPaymentIntents } from "@/modules/payment-intents/payment-intents.service";
 import { listWebhookEvents } from "@/modules/webhooks/webhook-events.service";
 import Link from "next/link";
-import { DashboardSection } from "./_components/dashboard-section";
-import { EmptyState } from "./_components/empty-state";
 import { CreateCheckoutSessionForm } from "./create-checkout-session-form";
 
 export const dynamic = "force-dynamic";
@@ -51,21 +51,21 @@ export default async function DashboardPage() {
       </header>
 
       <section className="mt-8 grid gap-4 md:grid-cols-4">
-        <article className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <p className="text-sm text-zinc-500">Paid volume</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-50">
             {formatMoney(totalVolumeCents, "EUR")}
           </p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <p className="text-sm text-zinc-500">Checkout sessions</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-50">{checkoutSessions.length}</p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <p className="text-sm text-zinc-500">Payment intents</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-50">{paymentIntents.length}</p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <p className="text-sm text-zinc-500">Webhook events</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-50">{webhookEvents.length}</p>
         </article>
