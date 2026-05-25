@@ -18,7 +18,7 @@ Content-Type: application/json
 
 {
   "title": "Test Product",
-  "description": "Minimal fake checkout session.",
+  "description": "Stripe Checkout payment session.",
   "amountCents": 1999,
   "currency": "EUR"
 }
@@ -28,33 +28,28 @@ Content-Type: application/json
 GET /api/checkout-sessions/:checkoutSessionId
 ```
 
+## Stripe Checkout
+
+```http
+POST /api/stripe/checkout-sessions
+Content-Type: application/json
+
+{
+  "checkoutSessionId": "checkout_session_id"
+}
+```
+
+## Stripe webhook
+
+```http
+POST /api/stripe/webhooks
+Stripe-Signature: t=timestamp,v1=signature
+```
+
 ## Payment intents
 
 ```http
 GET /api/payment-intents
-```
-
-```http
-POST /api/payment-intents
-Content-Type: application/json
-Idempotency-Key: checkout_checkout_demo
-
-{
-  "merchantId": "merchant_demo",
-  "checkoutSessionId": "checkout_demo",
-  "amountCents": 1999,
-  "currency": "EUR"
-}
-```
-
-```http
-PATCH /api/payment-intents
-Content-Type: application/json
-
-{
-  "paymentIntentId": "pi_or_cuid",
-  "cardNumber": "4242 4242 4242 4242"
-}
 ```
 
 ```http

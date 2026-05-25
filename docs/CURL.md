@@ -1,4 +1,4 @@
-# cURL
+# PowerShell requests
 
 ## Create checkout session
 

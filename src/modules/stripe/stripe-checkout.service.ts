@@ -17,6 +17,10 @@ export async function createStripeCheckoutSession(input: {
     throw new Error("checkout_session_not_found");
   }
 
+  if (checkoutSession.status === "paid") {
+    throw new Error("checkout_session_already_paid");
+  }
+
   if (checkoutSession.stripeCheckoutSessionId && checkoutSession.stripeCheckoutUrl) {
     return {
       id: checkoutSession.stripeCheckoutSessionId,
@@ -24,14 +28,19 @@ export async function createStripeCheckoutSession(input: {
     };
   }
 
+  const metadata = {
+    checkoutSessionId: checkoutSession.id,
+    merchantId: checkoutSession.merchantId
+  };
+
   const stripeCheckoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     success_url: `${env.appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env.appUrl}/payment/cancelled`,
     client_reference_id: checkoutSession.id,
-    metadata: {
-      checkoutSessionId: checkoutSession.id,
-      merchantId: checkoutSession.merchantId
+    metadata,
+    payment_intent_data: {
+      metadata
     },
     line_items: [
       {

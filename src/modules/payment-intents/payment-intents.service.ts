@@ -7,16 +7,11 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { markCheckoutSessionFailed, markCheckoutSessionPaid } from "@/modules/checkout-sessions/checkout-sessions.service";
-import { createPaymentFailedEvent, createPaymentSucceededEvent } from "@/modules/webhooks/webhook-events.service";
+import {
+  createPaymentFailedEvent,
+  createPaymentSucceededEvent
+} from "@/modules/webhooks/webhook-events.service";
 import type { PaymentIntentSummary } from "./payment-intent.types";
-
-type CreatePaymentIntentInput = {
-  merchantId: string;
-  checkoutSessionId?: string;
-  amountCents: number;
-  currency: string;
-  idempotencyKey?: string;
-};
 
 type MarkStripePaymentSucceededInput = {
   checkoutSessionId: string;
@@ -53,37 +48,6 @@ export async function findPaymentIntentById(id: string): Promise<PaymentIntentSu
   });
 
   return paymentIntent ? mapPaymentIntent(paymentIntent) : null;
-}
-
-export async function createPaymentIntent(
-  input: CreatePaymentIntentInput
-): Promise<PaymentIntentSummary> {
-  const existingPaymentIntent = input.idempotencyKey
-    ? await prisma.paymentIntent.findUnique({
-        where: {
-          merchantId_idempotencyKey: {
-            merchantId: input.merchantId,
-            idempotencyKey: input.idempotencyKey
-          }
-        }
-      })
-    : null;
-
-  if (existingPaymentIntent) {
-    return mapPaymentIntent(existingPaymentIntent);
-  }
-
-  const paymentIntent = await prisma.paymentIntent.create({
-    data: {
-      merchantId: input.merchantId,
-      checkoutSessionId: input.checkoutSessionId,
-      amountCents: input.amountCents,
-      currency: input.currency.toUpperCase(),
-      idempotencyKey: input.idempotencyKey
-    }
-  });
-
-  return mapPaymentIntent(paymentIntent);
 }
 
 export async function markStripePaymentSucceeded(
@@ -216,6 +180,10 @@ export async function markStripePaymentFailed(
     }
 
     return null;
+  }
+
+  if (paymentIntent.status === PaymentIntentStatus.FAILED) {
+    return mapPaymentIntent(paymentIntent);
   }
 
   const failedPaymentIntent = await prisma.$transaction(async (tx) => {

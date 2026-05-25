@@ -57,8 +57,8 @@ pnpm build
 GET    /api/health
 GET    /api/checkout-sessions
 POST   /api/checkout-sessions
+GET    /api/checkout-sessions/:checkoutSessionId
 GET    /api/payment-intents
-POST   /api/payment-intents
 GET    /api/payment-intents/:paymentIntentId
 POST   /api/stripe/checkout-sessions
 POST   /api/stripe/webhooks
