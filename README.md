@@ -1,47 +1,52 @@
 # Payment Surface
 
-Minimal simulated payment platform built with Next.js, TypeScript, Prisma, PostgreSQL, and Tailwind.
+Minimal Stripe Checkout payment surface built with Next.js, TypeScript, Prisma, PostgreSQL, and Tailwind.
 
 ## Scope
 
-Payment Surface is a portfolio project. It simulates payment-platform primitives without processing real money.
+Payment Surface is a portfolio project for hosted checkout creation, Stripe webhook handling, local payment state, and ledger tracking.
 
 ## Features
 
-- Merchant demo context
+- Merchant context from environment configuration
 - Checkout session creation
-- Hosted checkout page
-- Test card authorization
+- Stripe Checkout redirect
+- Stripe webhook signature verification
 - Payment intent lifecycle
 - Authorization and capture records
-- Immutable ledger entries
+- Ledger entries
 - Webhook event records
 - Webhook endpoint registration
 - Dashboard overview
 - Prisma 7 config with `prisma.config.ts`
 
-## Test cards
-
-| Card number | Result |
-| --- | --- |
-| `4242 4242 4242 4242` | Success |
-| `4000 0000 0000 0002` | Declined |
-| `4000 0000 0000 9995` | Insufficient funds |
-
 ## Setup
 
-```bash
+```powershell
 pnpm install
-cp .env.example .env
-docker compose up -d
+Copy-Item .env.example .env
+pnpm db:up
 pnpm prisma:migrate
 pnpm db:seed
 pnpm dev
 ```
 
+## Stripe webhook for local development
+
+```powershell
+stripe login
+stripe listen --events checkout.session.completed,checkout.session.expired,payment_intent.payment_failed --forward-to localhost:3000/api/stripe/webhooks
+```
+
+Copy the `whsec_...` value from Stripe CLI into `.env` as:
+
+```env
+STRIPE_WEBHOOK_SECRET="whsec_replace_me"
+```
+
 ## Verify
 
-```bash
+```powershell
 pnpm check
 pnpm build
 ```
@@ -54,12 +59,12 @@ GET    /api/checkout-sessions
 POST   /api/checkout-sessions
 GET    /api/payment-intents
 POST   /api/payment-intents
-PATCH  /api/payment-intents
 GET    /api/payment-intents/:paymentIntentId
+POST   /api/stripe/checkout-sessions
+POST   /api/stripe/webhooks
 GET    /api/ledger
 GET    /api/webhook-endpoints
 POST   /api/webhook-endpoints
 GET    /api/webhook-events
 PATCH  /api/webhook-events/:webhookEventId
-GET    /api/webhooks/test
 ```

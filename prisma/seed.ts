@@ -2,32 +2,37 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`${name} is required.`);
+  }
+
+  return value;
+}
+
+const connectionString = getRequiredEnv("DATABASE_URL");
+const defaultMerchantId = getRequiredEnv("DEFAULT_MERCHANT_ID");
+const defaultMerchantName = getRequiredEnv("DEFAULT_MERCHANT_NAME");
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!
+  connectionString
 });
 
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const merchant = await prisma.merchant.upsert({
-    where: { id: "merchant_demo" },
-    update: {},
+  await prisma.merchant.upsert({
+    where: {
+      id: defaultMerchantId
+    },
+    update: {
+      name: defaultMerchantName
+    },
     create: {
-      id: "merchant_demo",
-      name: "Demo Merchant"
-    }
-  });
-
-  await prisma.checkoutSession.upsert({
-    where: { id: "checkout_demo" },
-    update: {},
-    create: {
-      id: "checkout_demo",
-      merchantId: merchant.id,
-      title: "Demo Checkout",
-      description: "A fake payment flow. Because real card networks are not a weekend toy.",
-      amountCents: 1999,
-      currency: "EUR"
+      id: defaultMerchantId,
+      name: defaultMerchantName
     }
   });
 }

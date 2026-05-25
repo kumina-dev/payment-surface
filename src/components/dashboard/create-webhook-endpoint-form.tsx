@@ -13,7 +13,7 @@ type CreateWebhookEndpointResponse = {
 export function CreateWebhookEndpointForm() {
   const router = useRouter();
 
-  const [url, setUrl] = useState("https://example.com/webhooks/payment-surface");
+  const [url, setUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "creating" | "failed">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function CreateWebhookEndpointForm() {
 
     router.refresh();
     setStatus("idle");
-    setUrl("https://example.com/webhooks/payment-surface");
+    setUrl("");
   }
 
   return (
@@ -56,6 +56,7 @@ export function CreateWebhookEndpointForm() {
           <input
             value={url}
             onChange={(event) => setUrl(event.target.value)}
+            placeholder="https://example.com/webhooks/payment-surface"
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-zinc-50 outline-none"
           />
         </label>

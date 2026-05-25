@@ -2,13 +2,13 @@ import { CreateCheckoutSessionForm } from "@/components/dashboard/create-checkou
 import { CreateWebhookEndpointForm } from "@/components/dashboard/create-webhook-endpoint-form";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { getDemoAuthContext } from "@/modules/auth/auth.service";
+import { getAuthContext } from "@/modules/auth/auth.service";
 import {
   formatMoney,
   listCheckoutSessions
 } from "@/modules/checkout-sessions/checkout-sessions.service";
 import { listLedgerEntries } from "@/modules/ledger/ledger.service";
-import { getDemoMerchant } from "@/modules/merchants/merchants.service";
+import { findMerchantSummaryById } from "@/modules/merchants/merchants.service";
 import { listPaymentIntents } from "@/modules/payment-intents/payment-intents.service";
 import { listWebhookEndpoints } from "@/modules/webhooks/webhook-endpoints.service";
 import { listWebhookEvents } from "@/modules/webhooks/webhook-events.service";
@@ -17,8 +17,8 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const auth = getDemoAuthContext();
-  const merchant = getDemoMerchant();
+  const auth = getAuthContext();
+  const merchant = await findMerchantSummaryById(auth.merchantId);
 
   const [checkoutSessions, paymentIntents, ledgerEntries, webhookEvents, webhookEndpoints] =
     await Promise.all([
@@ -49,10 +49,10 @@ export default async function DashboardPage() {
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">{merchant.name}</h1>
         </div>
         <Link
-          href="/pay/checkout_demo"
-          className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-medium text-white"
+          href="/"
+          className="rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-zinc-100"
         >
-          Open demo checkout
+          Home
         </Link>
       </header>
 

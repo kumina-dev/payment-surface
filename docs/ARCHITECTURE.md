@@ -8,6 +8,7 @@ src/
     api/
     dashboard/
     pay/
+    payment/
   components/
     checkout/
     dashboard/
@@ -17,8 +18,8 @@ src/
     checkout-sessions/
     ledger/
     merchants/
-    payment-methods/
     payment-intents/
+    stripe/
     webhooks/
   styles/
 ```
@@ -27,6 +28,8 @@ src/
 
 ```txt
 CheckoutSession
+  -> Stripe Checkout Session
+  -> Stripe webhook
   -> PaymentIntent
   -> Authorization
   -> Capture
@@ -34,21 +37,15 @@ CheckoutSession
   -> WebhookEvent
 ```
 
-## Payment simulation
+## Payment processing
 
-The app does not process real payments.
+Stripe Checkout is the payment service provider.
 
-The test card network maps known card numbers to deterministic authorization outcomes.
+The application stores local payment state and listens for Stripe webhook events to finalize successful or failed payments.
 
 ## Current auth model
 
-The app uses a fixed demo merchant context:
-
-```txt
-merchant_demo
-```
-
-This keeps the foundation small while preserving the boundary where real auth can be added later.
+The app uses `DEFAULT_MERCHANT_ID` from environment configuration.
 
 ## Database
 
@@ -66,10 +63,8 @@ src/generated/prisma
 ```
 
 ## Intentional limitations
-- No real card processing
 - No card storage
 - No payouts
 - No subscriptions
-- No PCI scope
-- No real webhook delivery yet
-- No Redis usage yet
+- No PCI card handling
+- No multi-tenant auth yet

@@ -13,9 +13,9 @@ type CreateCheckoutSessionResponse = {
 export function CreateCheckoutSessionForm() {
   const router = useRouter();
 
-  const [title, setTitle] = useState("Test Product");
-  const [description, setDescription] = useState("Minimal fake checkout session.");
-  const [amount, setAmount] = useState("19.99");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [status, setStatus] = useState<"idle" | "creating" | "failed">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +55,9 @@ export function CreateCheckoutSessionForm() {
 
     router.refresh();
     setStatus("idle");
-    setTitle("Test Product");
-    setDescription("Minimal fake checkout session.");
-    setAmount("19.99");
+    setTitle("");
+    setDescription("");
+    setAmount("");
     setCurrency("EUR");
   }
 
@@ -73,6 +73,7 @@ export function CreateCheckoutSessionForm() {
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            placeholder="Product or service name"
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-zinc-50 outline-none"
           />
         </label>
@@ -82,6 +83,7 @@ export function CreateCheckoutSessionForm() {
           <input
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
+            placeholder="19.99"
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-zinc-50 outline-none"
           />
         </label>
@@ -101,6 +103,7 @@ export function CreateCheckoutSessionForm() {
           <input
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+            placeholder="Optional"
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-zinc-50 outline-none"
           />
         </label>

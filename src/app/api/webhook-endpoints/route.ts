@@ -1,4 +1,4 @@
-import { getDemoAuthContext } from "@/modules/auth/auth.service";
+import { getAuthContext } from "@/modules/auth/auth.service";
 import {
   createWebhookEndpoint,
   listWebhookEndpoints
@@ -6,7 +6,7 @@ import {
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const auth = getDemoAuthContext();
+  const auth = getAuthContext();
 
   const endpoints = await listWebhookEndpoints({
     merchantId: auth.merchantId
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = getDemoAuthContext();
+  const auth = getAuthContext();
 
   const body = (await request.json()) as {
     url?: unknown;

@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import type { MerchantSummary } from "@/modules/merchants/merchant.types";
 
-export function getDemoMerchant(): MerchantSummary {
-  return {
-    id: "merchant_demo",
-    name: "Demo Merchant"
-  };
+export async function findMerchantSummaryById(id: string): Promise<MerchantSummary> {
+  const merchant = await prisma.merchant.findUniqueOrThrow({
+    where: {
+      id
+    },
+    select: {
+      id: true,
+      name: true
+    }
+  });
+
+  return merchant;
 }
 
 export async function listMerchants(): Promise<MerchantSummary[]> {
