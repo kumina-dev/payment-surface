@@ -6,9 +6,8 @@ import {
   PaymentIntentStatus
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import { markCheckoutSessionPaid } from "@/modules/checkout-sessions/checkout-sessions.service";
-import { authorizeTestCard } from "@/modules/payment-methods/test-card-network";
-import { createPaymentSucceededEvent } from "@/modules/webhooks/webhook-events.service";
+import { markCheckoutSessionFailed, markCheckoutSessionPaid } from "@/modules/checkout-sessions/checkout-sessions.service";
+import { createPaymentFailedEvent, createPaymentSucceededEvent } from "@/modules/webhooks/webhook-events.service";
 import type { PaymentIntentSummary } from "./payment-intent.types";
 
 type CreatePaymentIntentInput = {
@@ -19,29 +18,16 @@ type CreatePaymentIntentInput = {
   idempotencyKey?: string;
 };
 
-type ConfirmPaymentIntentInput = {
-  merchantId: string;
-  amountCents: number;
-  currency: string;
-  cardNumber: string;
+type MarkStripePaymentSucceededInput = {
+  checkoutSessionId: string;
+  stripePaymentIntentId: string;
 };
 
-type ConfirmPersistedPaymentIntentInput = {
-  paymentIntentId: string;
-  cardNumber: string;
+type MarkStripePaymentFailedInput = {
+  checkoutSessionId?: string;
+  stripePaymentIntentId?: string;
+  failureCode: string;
 };
-
-export function confirmTestPaymentIntent(input: ConfirmPaymentIntentInput): PaymentIntentSummary {
-  const authorization = authorizeTestCard(input.cardNumber);
-
-  return {
-    id: `pi_${crypto.randomUUID().replaceAll("-", "")}`,
-    merchantId: input.merchantId,
-    amountCents: input.amountCents,
-    currency: input.currency,
-    status: authorization.approved ? "succeeded" : "failed"
-  };
-}
 
 export async function listPaymentIntents(input: {
   merchantId: string;
@@ -100,84 +86,146 @@ export async function createPaymentIntent(
   return mapPaymentIntent(paymentIntent);
 }
 
-export async function confirmPersistedPaymentIntent(
-  input: ConfirmPersistedPaymentIntentInput
+export async function markStripePaymentSucceeded(
+  input: MarkStripePaymentSucceededInput
 ): Promise<PaymentIntentSummary> {
-  const authorizationResult = authorizeTestCard(input.cardNumber);
-
-  const paymentIntent = await prisma.paymentIntent.findUniqueOrThrow({
+  const checkoutSession = await prisma.checkoutSession.findUniqueOrThrow({
     where: {
-      id: input.paymentIntentId
+      id: input.checkoutSessionId
     }
   });
 
-  if (!authorizationResult.approved) {
-    const failedPaymentIntent = await prisma.$transaction(async (tx) => {
+  const existingPaymentIntent = await prisma.paymentIntent.findUnique({
+    where: {
+      checkoutSessionId: checkoutSession.id
+    }
+  });
+
+  if (existingPaymentIntent?.status === PaymentIntentStatus.SUCCEEDED) {
+    return mapPaymentIntent(existingPaymentIntent);
+  }
+
+  const succeededPaymentIntent = await prisma.$transaction(async (tx) => {
+    const paymentIntent =
+      existingPaymentIntent ??
+      (await tx.paymentIntent.create({
+        data: {
+          merchantId: checkoutSession.merchantId,
+          checkoutSessionId: checkoutSession.id,
+          amountCents: checkoutSession.amountCents,
+          currency: checkoutSession.currency,
+          stripePaymentIntentId: input.stripePaymentIntentId,
+          status: PaymentIntentStatus.PROCESSING
+        }
+      }));
+
+    const updatedPaymentIntent = await tx.paymentIntent.update({
+      where: {
+        id: paymentIntent.id
+      },
+      data: {
+        status: PaymentIntentStatus.SUCCEEDED,
+        stripePaymentIntentId: input.stripePaymentIntentId
+      }
+    });
+
+    const existingCapture = await tx.capture.findFirst({
+      where: {
+        paymentIntentId: paymentIntent.id,
+        status: CaptureStatus.SUCCEEDED
+      }
+    });
+
+    if (!existingCapture) {
       await tx.authorization.create({
         data: {
           paymentIntentId: paymentIntent.id,
-          status: AuthorizationStatus.DECLINED,
-          amountCents: paymentIntent.amountCents,
-          currency: paymentIntent.currency,
-          failureCode: authorizationResult.code
+          status: AuthorizationStatus.APPROVED,
+          amountCents: checkoutSession.amountCents,
+          currency: checkoutSession.currency
         }
       });
 
-      const updatedPaymentIntent = await tx.paymentIntent.update({
-        where: {
-          id: paymentIntent.id
-        },
+      await tx.capture.create({
         data: {
-          status: PaymentIntentStatus.FAILED
+          paymentIntentId: paymentIntent.id,
+          status: CaptureStatus.SUCCEEDED,
+          amountCents: checkoutSession.amountCents,
+          currency: checkoutSession.currency
+        }
+      });
+
+      await tx.ledgerEntry.create({
+        data: {
+          merchantId: checkoutSession.merchantId,
+          paymentIntentId: paymentIntent.id,
+          type: LedgerEntryType.PAYMENT,
+          direction: LedgerDirection.CREDIT,
+          amountCents: checkoutSession.amountCents,
+          currency: checkoutSession.currency
         }
       });
 
       await tx.webhookEvent.create({
-        data: {
-          type: "payment_intent.failed",
-          payload: {
-            paymentIntentId: paymentIntent.id,
-            merchantId: paymentIntent.merchantId,
-            amountCents: paymentIntent.amountCents,
-            currency: paymentIntent.currency,
-            failureCode: authorizationResult.code
-          }
-        }
+        data: createPaymentSucceededEvent({
+          paymentIntentId: paymentIntent.id,
+          merchantId: checkoutSession.merchantId,
+          amountCents: checkoutSession.amountCents,
+          currency: checkoutSession.currency
+        })
       });
+    }
 
-      return updatedPaymentIntent;
+    await tx.checkoutSession.update({
+      where: {
+        id: checkoutSession.id
+      },
+      data: {
+        status: "PAID"
+      }
     });
 
-    return mapPaymentIntent(failedPaymentIntent);
+    return updatedPaymentIntent;
+  });
+
+  await markCheckoutSessionPaid(checkoutSession.id);
+
+  return mapPaymentIntent(succeededPaymentIntent);
+}
+
+export async function markStripePaymentFailed(
+  input: MarkStripePaymentFailedInput
+): Promise<PaymentIntentSummary | null> {
+  const paymentIntent = input.stripePaymentIntentId
+    ? await prisma.paymentIntent.findUnique({
+        where: {
+          stripePaymentIntentId: input.stripePaymentIntentId
+        }
+      })
+    : input.checkoutSessionId
+      ? await prisma.paymentIntent.findUnique({
+          where: {
+            checkoutSessionId: input.checkoutSessionId
+          }
+        })
+      : null;
+
+  if (!paymentIntent) {
+    if (input.checkoutSessionId) {
+      await markCheckoutSessionFailed(input.checkoutSessionId);
+    }
+
+    return null;
   }
 
-  const succeededPaymentIntent = await prisma.$transaction(async (tx) => {
+  const failedPaymentIntent = await prisma.$transaction(async (tx) => {
     await tx.authorization.create({
       data: {
         paymentIntentId: paymentIntent.id,
-        status: AuthorizationStatus.APPROVED,
+        status: AuthorizationStatus.DECLINED,
         amountCents: paymentIntent.amountCents,
-        currency: paymentIntent.currency
-      }
-    });
-
-    await tx.capture.create({
-      data: {
-        paymentIntentId: paymentIntent.id,
-        status: CaptureStatus.SUCCEEDED,
-        amountCents: paymentIntent.amountCents,
-        currency: paymentIntent.currency
-      }
-    });
-
-    await tx.ledgerEntry.create({
-      data: {
-        merchantId: paymentIntent.merchantId,
-        paymentIntentId: paymentIntent.id,
-        type: LedgerEntryType.PAYMENT,
-        direction: LedgerDirection.CREDIT,
-        amountCents: paymentIntent.amountCents,
-        currency: paymentIntent.currency
+        currency: paymentIntent.currency,
+        failureCode: input.failureCode
       }
     });
 
@@ -186,27 +234,35 @@ export async function confirmPersistedPaymentIntent(
         id: paymentIntent.id
       },
       data: {
-        status: PaymentIntentStatus.SUCCEEDED
+        status: PaymentIntentStatus.FAILED
       }
     });
 
     await tx.webhookEvent.create({
-      data: createPaymentSucceededEvent({
+      data: createPaymentFailedEvent({
         paymentIntentId: paymentIntent.id,
         merchantId: paymentIntent.merchantId,
         amountCents: paymentIntent.amountCents,
-        currency: paymentIntent.currency
+        currency: paymentIntent.currency,
+        failureCode: input.failureCode
       })
     });
+
+    if (paymentIntent.checkoutSessionId) {
+      await tx.checkoutSession.update({
+        where: {
+          id: paymentIntent.checkoutSessionId
+        },
+        data: {
+          status: "FAILED"
+        }
+      });
+    }
 
     return updatedPaymentIntent;
   });
 
-  if (paymentIntent.checkoutSessionId) {
-    await markCheckoutSessionPaid(paymentIntent.checkoutSessionId);
-  }
-
-  return mapPaymentIntent(succeededPaymentIntent);
+  return mapPaymentIntent(failedPaymentIntent);
 }
 
 function mapPaymentIntent(paymentIntent: {
@@ -215,13 +271,15 @@ function mapPaymentIntent(paymentIntent: {
   amountCents: number;
   currency: string;
   status: PaymentIntentStatus;
+  stripePaymentIntentId: string | null;
 }): PaymentIntentSummary {
   return {
     id: paymentIntent.id,
     merchantId: paymentIntent.merchantId,
     amountCents: paymentIntent.amountCents,
     currency: paymentIntent.currency,
-    status: mapPaymentIntentStatus(paymentIntent.status)
+    status: mapPaymentIntentStatus(paymentIntent.status),
+    stripePaymentIntentId: paymentIntent.stripePaymentIntentId ?? undefined
   };
 }
 

@@ -1,6 +1,5 @@
 import { getDemoAuthContext } from "@/modules/auth/auth.service";
 import {
-  confirmPersistedPaymentIntent,
   createPaymentIntent,
   listPaymentIntents
 } from "@/modules/payment-intents/payment-intents.service";
@@ -63,28 +62,4 @@ export async function POST(request: Request) {
       status: 201
     }
   );
-}
-
-export async function PATCH(request: Request) {
-  const body = (await request.json()) as {
-    paymentIntentId?: unknown;
-    cardNumber?: unknown;
-  };
-
-  if (typeof body.paymentIntentId !== "string" || body.paymentIntentId.length < 1) {
-    return NextResponse.json({ error: "invalid_payment_intent_id" }, { status: 400 });
-  }
-
-  if (typeof body.cardNumber !== "string" || body.cardNumber.length < 12) {
-    return NextResponse.json({ error: "invalid_card_number" }, { status: 400 });
-  }
-
-  const paymentIntent = await confirmPersistedPaymentIntent({
-    paymentIntentId: body.paymentIntentId,
-    cardNumber: body.cardNumber
-  });
-
-  return NextResponse.json({
-    data: paymentIntent
-  });
 }

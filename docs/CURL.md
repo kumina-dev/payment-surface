@@ -2,59 +2,63 @@
 
 ## Create checkout session
 
-```bash
-curl -X POST http://localhost:3000/api/checkout-sessions \
-  -H "content-type: application/json" \
-  -d '{
+```powershell
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/checkout-sessions" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{
     "title": "Test Product",
-    "description": "Minimal fake checkout session.",
+    "description": "Stripe Checkout payment session.",
     "amountCents": 1999,
     "currency": "EUR"
   }'
 ```
 
-## Create payment intent
+## Create Stripe Checkout session
 
-```bash
-curl -X POST http://localhost:3000/api/payment-intents \
-  -H "content-type: application/json" \
-  -H "idempotency-key: manual_test_001" \
-  -d '{
-    "merchantId": "merchant_demo",
-    "amountCents": 1999,
-    "currency": "EUR"
+```powershell
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/stripe/checkout-sessions" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{
+    "checkoutSessionId": "PASTE_CHECKOUT_SESSION_ID"
   }'
 ```
 
-## Confirm payment intent
+## List payment intents
 
-```bash
-curl -X PATCH http://localhost:3000/api/payment-intents \
-  -H "content-type: application/json" \
-  -d '{
-    "paymentIntentId": "PASTE_PAYMENT_INTENT_ID",
-    "cardNumber": "4242 4242 4242 4242"
-  }'
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/api/payment-intents"
 ```
 
 ## List ledger entries
 
-```bash
-curl http://localhost:3000/api/ledger
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/api/ledger"
 ```
 
 ## Create webhook endpoint
 
-```bash
-curl -X POST http://localhost:3000/api/webhook-endpoints \
-  -H "content-type: application/json" \
-  -d '{
+```powershell
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/webhook-endpoints" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{
     "url": "https://example.com/webhooks/payment-surface"
   }'
 ```
 
 ## List webhook endpoints
 
-```bash
-curl http://localhost:3000/api/webhook-events
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/api/webhook-events"
+```
+
+## Listen to Stripe webhooks locally
+
+```powershell
+stripe listen --events checkout.session.completed,checkout.session.expired,payment_intent.payment_failed --forward-to localhost:3000/api/stripe/webhooks
 ```

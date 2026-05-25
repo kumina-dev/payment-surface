@@ -13,4 +13,5 @@ export type PaymentIntentSummary = {
   amountCents: number;
   currency: string;
   status: PaymentIntentStatus;
+  stripePaymentIntentId?: string;
 };
