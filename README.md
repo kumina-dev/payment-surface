@@ -306,4 +306,5 @@ The main purpose of the project is to demonstrate full-stack development, integr
 ## Author
 
 Ville Syrjälä
+
 GitHub: [kumina-dev](https://github.com/kumina-dev)
